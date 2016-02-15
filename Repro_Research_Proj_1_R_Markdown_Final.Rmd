@@ -1,0 +1,124 @@
+---
+title: "Reproducible Research Assignment 1"
+author: "Scott Hansen"
+date: "Sunday February 14, 2016"
+output: html_document
+---
+Load necessary libararies
+
+```{r}
+library(dplyr)
+library(stringr)
+library(ggplot2)
+library(Hmisc)
+library(timeDate)
+```
+
+1.  Code for Reading in the data set and/or processing the data
+
+```{r}
+
+setwd("E:\\Data Scientist\\Data Science Track\\Reproducible Reseearch\\Project 1\\Reproducible-Research-Project-1")
+IntervalData<- data.frame(read.csv("activity.csv", stringsAsFactors = FALSE, header = TRUE))
+
+```
+
+
+- Preprocess Data Convert interval to time
+
+
+```{r}
+
+IntervalData$DateTime<-paste(IntervalData$date, str_pad(IntervalData$interval, 4,side="left", pad="0"))
+
+
+```
+
+2.  Histogram of the total number of steps taken each day
+
+
+```{r}
+
+DailyTotalSteps<-tapply(IntervalData$steps, IntervalData$date, sum, na.rm=TRUE)
+
+hist(DailyTotalSteps, breaks=7)
+
+  
+```
+
+3.  Mean and Median of steps taken each day  
+  
+```{r, echo=TRUE} 
+MeanSteps<-mean(DailyTotalSteps)
+MedianSteps<-median(DailyTotalSteps)
+
+```
+
+-Mean 
+```{r}
+MeanSteps 
+```
+
+-Median 
+```{r}
+MedianSteps 
+```
+
+4.  Time series plot of the average steps taken
+
+```{r}
+AvgStepsPerInterfal<- IntervalData[!is.na(IntervalData$steps),]%>%
+group_by(interval)%>% 
+summarise(Avg=mean(steps))
+
+qplot(interval, Avg, data=AvgStepsPerInterfal, geom="line", xlab="5-minute interval", ylab="Avg # of Steps")
+
+```
+
+5.  5 minute interval that on average contains the maximum number of steps
+
+* The maximum number of steps occurs at interval
+
+```{r}
+
+mostSteps <- which.max(AvgStepsPerInterfal$Avg)
+
+MaxInterval <-AvgStepsPerInterfal[mostSteps,]
+
+MaxInterval$interval
+
+```
+
+6.  Code to determine how to impute missing data
+* I selected the mean of all steps to replace missing values
+
+```{r}
+
+IntervalDataClean<-IntervalData
+IntervalDataClean$steps<-impute(IntervalDataClean$steps, fun=mean)
+
+```
+7.  Histogrram of the total number of steps taken after missing values are imputed  
+
+```{r}
+
+DailyTotalSteps.i<-tapply(IntervalDataClean$steps, IntervalData$date, sum)
+hist(DailyTotalSteps.i, breaks=7)
+
+
+MeanSteps.i<-mean(DailyTotalSteps.i)
+MedianSteps.i<-median(DailyTotalSteps.i)
+
+```
+
+8.  Panel plot comparing the average number of steps taken per 5-minute Interval across weekdays and week
+
+```{r}
+
+IntervalDataClean$DayType<- ifelse(isWeekday(IntervalDataClean$date, wday = 1:5), 'WeekDay', 'WeekEnd')
+
+IntervalDataClean.S<-aggregate(steps~interval+DayType, data=IntervalDataClean, mean)
+
+
+qplot(interval, steps, data=IntervalDataClean.S, geom="line", facets=.~DayType, color=DayType, xlab="5-minute interval", ylab="Avg # of Steps")
+
