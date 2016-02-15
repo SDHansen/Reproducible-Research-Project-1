@@ -2,7 +2,7 @@
 title: "Reproducible Research Assignment 1"
 author: "Scott Hansen"
 date: "Sunday February 14, 2016"
-output: html_document
+output: word_document
 ---
 Load necessary libararies
 
